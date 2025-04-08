@@ -1,5 +1,5 @@
 {
-    "SNRThreshold": -25,
+    "SNRThreshold": 25.00,
     "ScanningText": "Scanning",
     "Channels": [
         { "Name": "Emergency", "Frequency": 121.5 },

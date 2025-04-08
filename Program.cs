@@ -2,11 +2,12 @@
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 class Program
 {
-    static void Main()
+    static async Task Main()
     {
         Console.WriteLine($"SDRSharp SNR Log 解析工具 v1.0.0\n" +
                           $"作者: 2025/04/08 by Pata");
@@ -57,9 +58,10 @@ class Program
                             File.WriteAllText(txtFreqFilePath, $"{frequencyString} MHz"); // 顯示為 "125.1 MHz" 格式
 
                             bool scanning = false;
+                            double snrThreshold = await GetSNRThreshold(jsonPath);
                             if (double.TryParse(lastColumns[2], out double snrSignal))
                             {
-                                if (snrSignal >= GetSNRThreshold(jsonPath))
+                                if (snrSignal.CompareTo(snrThreshold) >= 0)
                                 {
                                     scanning = false;
                                 }
@@ -68,7 +70,7 @@ class Program
                                     scanning = true;
                                 }
                             }
-                            string channelName = GetChannelName(frequencyInMHz, scanning, jsonPath);
+                            string channelName = await GetChannelName(frequencyInMHz, scanning, jsonPath);
                             File.WriteAllText(txtNameFilePath, channelName); // 寫入頻道名稱
                         }
                         else
@@ -95,19 +97,19 @@ class Program
         }
     }
 
-    static double GetSNRThreshold(string jsonPath)
+    static async Task<double> GetSNRThreshold(string jsonPath)
     {
         // 讀取 JSON 檔案並解析 SNR 閾值
-        string json = File.ReadAllText(jsonPath);
+        string json = await File.ReadAllTextAsync(jsonPath);
         var snrData = JsonConvert.DeserializeObject<ChannelData>(json);
         return snrData?.SNRThreshold ?? 0.0; // 預設為 0.0
     }
 
-    static string GetChannelName(double frequencyInMHz, bool scanning, string jsonPath)
+    static async Task<string> GetChannelName(double frequencyInMHz, bool scanning, string jsonPath)
     {
         string channelName = frequencyInMHz.ToString();
         // 依照JSON取得對應的頻道名稱
-        string json = File.ReadAllText(jsonPath);
+        string json = await File.ReadAllTextAsync(jsonPath);
         var channelData = JsonConvert.DeserializeObject<ChannelData>(json);
         if (scanning)
         {
