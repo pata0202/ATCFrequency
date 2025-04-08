@@ -55,7 +55,20 @@ class Program
                             double frequencyInMHz = frequency / 1000000;
                             string frequencyString = frequencyInMHz.ToString("F1"); // 格式化為小數點後一位
                             File.WriteAllText(txtFreqFilePath, $"{frequencyString} MHz"); // 顯示為 "125.1 MHz" 格式
-                            string channelName = GetChannelName(frequencyInMHz, jsonPath);
+
+                            bool scanning = false;
+                            if (double.TryParse(lastColumns[2], out double snrSignal))
+                            {
+                                if (snrSignal >= GetSNRThreshold(jsonPath))
+                                {
+                                    scanning = true;
+                                }
+                                else
+                                {
+                                    scanning = false;
+                                }
+                            }
+                            string channelName = GetChannelName(frequencyInMHz, scanning, jsonPath);
                             File.WriteAllText(txtNameFilePath, channelName); // 寫入頻道名稱
                         }
                         else
@@ -82,15 +95,28 @@ class Program
         }
     }
 
-    static string GetChannelName(double frequencyInMHz, string jsonPath)
+    static double GetSNRThreshold(string jsonPath)
+    {
+        // 讀取 JSON 檔案並解析 SNR 閾值
+        string json = File.ReadAllText(jsonPath);
+        var snrData = JsonConvert.DeserializeObject<ChannelData>(json);
+        return snrData?.SNRThreshold ?? 0.0; // 預設為 0.0
+    }
+
+    static string GetChannelName(double frequencyInMHz, bool scanning, string jsonPath)
     {
         string channelName = frequencyInMHz.ToString();
         // 依照JSON取得對應的頻道名稱
-        // 這裡可以根據實際需求進行JSON解析和頻道名稱的獲取
-        // 例如：
         string json = File.ReadAllText(jsonPath);
         var channelData = JsonConvert.DeserializeObject<ChannelData>(json);
-        channelName = channelData?.Channels.FirstOrDefault(f => f.Frequency == frequencyInMHz)?.Name ?? channelName;
-        return channelName;
+        if (scanning)
+        {
+            return channelData.ScanningText ?? channelName; // 如果正在掃描，則顯示掃描文字
+        }
+        else
+        {
+            channelName = channelData?.Channels.FirstOrDefault(f => f.Frequency == frequencyInMHz)?.Name ?? channelName;
+            return channelName;
+        }
     }
 }

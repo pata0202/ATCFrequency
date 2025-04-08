@@ -1,4 +1,6 @@
 {
+    "SNRThreshold": -25,
+    "ScanningText": "Scanning",
     "Channels": [
         { "Name": "Emergency", "Frequency": 121.5 },
         { "Name": "Taipei Approach", "Frequency": 125.1 },
