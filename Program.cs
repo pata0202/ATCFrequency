@@ -2,15 +2,28 @@
 using System.IO;
 using System.Linq;
 using System.Threading;
-
+using Newtonsoft.Json;
 
 class Program
 {
     static void Main()
     {
-        string csvFilePath = @"C:\Users\a2829\Desktop\ATC\SDRSharp_20250331_022457Z_SNR.csv";
-        string txtFilePath = @"C:\Users\a2829\Desktop\ATC\Batch\currentFreq.txt";
-        string txtNameFilePath = @"C:\Users\a2829\Desktop\ATC\Batch\currentName.txt";
+        Console.WriteLine($"SDRSharp SNR Log 解析工具 v1.0.0\n" +
+                          $"作者: 2025/04/08 by Pata");
+
+        string currentPath = Directory.GetCurrentDirectory();
+        string csvFilePath = Path.Combine(currentPath, "Files", "SDRSharp_SNR_Log.csv");
+        string txtFreqFilePath = Path.Combine(currentPath, "Files", "currentFreq.txt");
+        string txtNameFilePath = Path.Combine(currentPath, "Files", "currentName.txt");
+        string jsonPath = Path.Combine(currentPath, "Files", "ChannelNames.json");
+        Console.WriteLine("===================================");
+        Console.WriteLine($"SDRSharp SNR Log 檔案位置請放在: {csvFilePath}");
+        Console.WriteLine($"ChannelNames.json 檔案位置請放在: {jsonPath}");
+        Console.WriteLine("===================================");
+        Console.WriteLine(@$"最新頻率檔案: {txtFreqFilePath}");
+        Console.WriteLine(@$"頻道名稱檔案: {txtNameFilePath}");
+        Console.WriteLine("===================================");
+        Console.WriteLine($"{DateTime.Now:yyyy/MM/dd HH:mm:ss} 正在執行...");
 
         while (true)
         {
@@ -41,10 +54,9 @@ class Program
                         {
                             double frequencyInMHz = frequency / 1000000;
                             string frequencyString = frequencyInMHz.ToString("F1"); // 格式化為小數點後一位
-                            File.WriteAllText(txtFilePath, $"{frequencyString} MHz"); // 顯示為 "125.1 MHz" 格式
-                            // string channelName = GetChannelName(frequencyInMHz);
-                            // string channelName = lastColumns[0].Trim(); // 取得頻道名稱
-                            // File.WriteAllText(txtNameFilePath, channelName); // 寫入頻道名稱
+                            File.WriteAllText(txtFreqFilePath, $"{frequencyString} MHz"); // 顯示為 "125.1 MHz" 格式
+                            string channelName = GetChannelName(frequencyInMHz, jsonPath);
+                            File.WriteAllText(txtNameFilePath, channelName); // 寫入頻道名稱
                         }
                         else
                         {
@@ -68,5 +80,17 @@ class Program
 
             Thread.Sleep(500);
         }
+    }
+
+    static string GetChannelName(double frequencyInMHz, string jsonPath)
+    {
+        string channelName = frequencyInMHz.ToString();
+        // 依照JSON取得對應的頻道名稱
+        // 這裡可以根據實際需求進行JSON解析和頻道名稱的獲取
+        // 例如：
+        string json = File.ReadAllText(jsonPath);
+        var channelData = JsonConvert.DeserializeObject<ChannelData>(json);
+        channelName = channelData?.Channels.FirstOrDefault(f => f.Frequency == frequencyInMHz)?.Name ?? channelName;
+        return channelName;
     }
 }

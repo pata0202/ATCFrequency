@@ -1,0 +1,9 @@
+{
+    "Channels": [
+        { "Name": "Emergency", "Frequency": 121.5 },
+        { "Name": "Taipei Approach", "Frequency": 125.1 },
+        { "Name": "Taipei Final Approach", "Frequency": 125.6 },
+        { "Name": "Taipei Departure", "Frequency": 128.5 },
+        { "Name": "Taipei Tower", "Frequency": 118.7 }
+    ]
+}
