@@ -61,11 +61,11 @@ class Program
                             {
                                 if (snrSignal >= GetSNRThreshold(jsonPath))
                                 {
-                                    scanning = true;
+                                    scanning = false;
                                 }
                                 else
                                 {
-                                    scanning = false;
+                                    scanning = true;
                                 }
                             }
                             string channelName = GetChannelName(frequencyInMHz, scanning, jsonPath);
