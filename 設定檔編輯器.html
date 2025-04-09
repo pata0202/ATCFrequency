@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>JSON 編輯器</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    td, th {
+      border: 1px solid #ccc;
+      padding: 8px;
+    }
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    h2 {
+      margin-top: 1.5rem;
+    }
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+    button {
+      margin-right: 1rem;
+      padding: 6px 12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h2>載入 ChannelNames.json 檔案</h2>
+    <input type="file" @change="loadJsonFile" accept=".json" />
+    <div class="error" v-if="loadError">{{ loadError }}</div>
+
+    <h2>一般設定</h2>
+    <label>
+      SNRThreshold：
+      <input type="number" v-model.number="data.SNRThreshold">
+    </label>
+    <br><br>
+    <label>
+      ScanningText：
+      <input type="text" v-model="data.ScanningText">
+    </label>
+
+    <h2>頻道列表</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>頻道名稱</th>
+          <th>頻率 (MHz)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="(ch, index) in data.Channels" :key="index">
+          <td><input v-model="ch.Name" type="text" /></td>
+          <td><input v-model.number="ch.Frequency" type="number" step="0.1" /></td>
+          <td><button @click="removeChannel(index)">刪除</button></td>
+        </tr>
+      </tbody>
+      </table>
+      <button @click="addChannel">新增頻道</button>
+      
+    </table>
+
+    <h2>JSON 輸出</h2>
+    <button @click="save">💾 儲存檔案</button>
+    <p>預覽</p>
+    <pre>{{ formattedJson }}</pre>
+  </div>
+
+  <script>
+    const { createApp, ref, computed } = Vue;
+
+    createApp({
+      setup() {
+        const data = ref({
+          SNRThreshold: 25.00,
+          ScanningText: "Scanning",
+          Channels: []
+        });
+        const loadError = ref('');
+        const fileName = ref(''); // 儲存目前載入的檔名
+
+        const loadJsonFile = (event) => {
+          const file = event.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            try {
+              const parsed = JSON.parse(e.target.result);
+              if (
+                typeof parsed.SNRThreshold === 'number' &&
+                typeof parsed.ScanningText === 'string' &&
+                Array.isArray(parsed.Channels)
+              ) {
+                data.value = parsed;
+                fileName.value = file.name;
+                loadError.value = '';
+              } else {
+                throw new Error('格式不符');
+              }
+            } catch (err) {
+              loadError.value = '載入失敗：' + err.message;
+            }
+          };
+          reader.readAsText(file);
+        };
+
+        const formattedJson = computed(() =>
+          JSON.stringify(data.value, null, 2)
+        );
+
+        const download = (jsonStr, name) => {
+          const blob = new Blob([jsonStr], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = name;
+          a.click();
+          URL.revokeObjectURL(url);
+        };
+
+        const saveAs = () => {
+          const defaultName = 'ChannelNames.json';
+          download(formattedJson.value, defaultName);
+        };
+
+        const save = () => {
+          const name = fileName.value || 'ChannelNames.json';
+          download(formattedJson.value, name);
+        };
+
+        const addChannel = () => {
+  data.value.Channels.push({ Name: '', Frequency: 0 });
+};
+
+const removeChannel = (index) => {
+  data.value.Channels.splice(index, 1);
+};
+
+
+        return {
+          data,
+          loadJsonFile,
+          formattedJson,
+          saveAs,
+          save,
+          loadError,
+          addChannel,
+          removeChannel
+        };
+      }
+    }).mount('#app');
+  </script>
+</body>
+</html>
