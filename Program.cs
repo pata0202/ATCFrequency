@@ -9,8 +9,9 @@ class Program
 {
     static async Task Main()
     {
-        Console.WriteLine($"SDRSharp SNR Log 解析工具 v1.0.0\n" +
-                          $"作者: 2025/04/08 by Pata");
+        Console.WriteLine($"SDRSharp SNR Log 解析工具 v1.0.1\n" +
+                          $"作者: 2025/04/22 by Pata\n
+                          改由 Peak 作為判斷");
 
         string currentPath = Directory.GetCurrentDirectory();
         string csvFilePath = Path.Combine(currentPath, "Files", "SDRSharp_SNR_Log.csv");
@@ -59,7 +60,7 @@ class Program
 
                             bool scanning = false;
                             double snrThreshold = await GetSNRThreshold(jsonPath);
-                            if (double.TryParse(lastColumns[2], out double snrSignal))
+                            if (double.TryParse(lastColumns[3], out double snrSignal))
                             {
                                 if (snrSignal.CompareTo(snrThreshold) >= 0)
                                 {
